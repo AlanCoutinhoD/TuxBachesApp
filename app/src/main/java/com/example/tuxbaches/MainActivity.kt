@@ -13,6 +13,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.tuxbaches.ui.screens.LoginScreen
 import com.example.tuxbaches.ui.screens.RegisterScreen
 import com.example.tuxbaches.ui.screens.HomeScreen
+import com.example.tuxbaches.ui.screens.AddIncidentScreen
 import com.example.tuxbaches.ui.theme.TuxBachesTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -49,7 +50,19 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         composable("home") {
-                            HomeScreen()
+                            HomeScreen(
+                                onNavigateToAddIncident = { navController.navigate("add_incident") }
+                            )
+                        }
+                        composable("add_incident") {
+                            AddIncidentScreen(
+                                onNavigateBack = { navController.popBackStack() },
+                                onNavigateToHome = {
+                                    navController.navigate("home") {
+                                        popUpTo("home") { inclusive = true }
+                                    }
+                                }
+                            )
                         }
                     }
                 }

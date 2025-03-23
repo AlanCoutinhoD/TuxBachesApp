@@ -1,6 +1,7 @@
 package com.example.tuxbaches.di
 
 import com.example.tuxbaches.data.api.AuthApi
+import com.example.tuxbaches.data.api.IncidentApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,5 +27,11 @@ object NetworkModule {
     @Singleton
     fun provideAuthApi(retrofit: Retrofit): AuthApi {
         return retrofit.create(AuthApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideIncidentApi(retrofit: Retrofit): IncidentApi {
+        return retrofit.create(IncidentApi::class.java)
     }
 }
