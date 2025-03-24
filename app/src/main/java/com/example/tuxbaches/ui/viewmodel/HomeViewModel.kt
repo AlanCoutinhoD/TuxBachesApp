@@ -6,6 +6,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.example.tuxbaches.data.api.IncidentApi
 import com.example.tuxbaches.data.model.Incident
+import com.example.tuxbaches.data.repository.IncidentRepository
 // Change this line
 import com.example.tuxbaches.util.PreferencesKeys
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,7 +19,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val incidentApi: IncidentApi,
+    private val repository: IncidentRepository,
     private val dataStore: DataStore<Preferences>
 ) : ViewModel() {
     
@@ -28,15 +29,13 @@ class HomeViewModel @Inject constructor(
     fun fetchNearbyIncidents(latitude: Double, longitude: Double) {
         viewModelScope.launch {
             try {
-                val token = dataStore.data.first()[PreferencesKeys.TOKEN] ?: return@launch
-                val nearbyIncidents = incidentApi.getNearbyIncidents(
-                    "Bearer $token",
-                    latitude,
-                    longitude
-                )
-                _incidents.value = nearbyIncidents
+                println("Fetching incidents for location: ($latitude, $longitude)")
+                val fetchedIncidents = repository.getNearbyIncidents(latitude, longitude)
+                println("Successfully fetched ${fetchedIncidents.size} incidents")
+                _incidents.value = fetchedIncidents
             } catch (e: Exception) {
-                // Handle error
+                println("Error fetching incidents: ${e.javaClass.simpleName} - ${e.message}")
+                // Handle error appropriately
             }
         }
     }

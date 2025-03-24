@@ -44,7 +44,7 @@ class IncidentViewModel @Inject constructor(
                     image_url = null,
                     created_at = "",
                     updated_at = "",
-                    distance = 0
+                    distance = 0.0  // Changed from 0 to 0.0 to match Double type
                 )
 
                 println("Sending incident to API...")

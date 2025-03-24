@@ -17,11 +17,33 @@ class IncidentRepository @Inject constructor(
 ) {
     suspend fun createIncident(incident: Incident): Incident {
         val token = dataStore.data.first()[PreferencesKeys.TOKEN] ?: throw Exception("No token found")
-        return api.createIncident("Bearer $token", incident)
+        println("Creating incident with token: $token")
+        val response = api.createIncident("Bearer $token", incident)
+        println("API Response for create incident: $response")
+        return response
     }
 
     suspend fun getNearbyIncidents(latitude: Double, longitude: Double): List<Incident> {
-        val token = dataStore.data.first()[PreferencesKeys.TOKEN] ?: throw Exception("No token found")
-        return api.getNearbyIncidents("Bearer $token", latitude, longitude)
+        try {
+            println("Starting getNearbyIncidents - Lat: $latitude, Lon: $longitude")
+            
+            val token = dataStore.data.first()[PreferencesKeys.TOKEN]
+            println("Token retrieved: ${token != null}")
+            
+            if (token == null) {
+                println("Token is null - Authentication issue")
+                throw Exception("No token found")
+            }
+            
+            println("Making API call with token: ${token.take(10)}...")
+            val response = api.getNearbyIncidents("Bearer $token", latitude, longitude)
+            println("API Response received - Number of incidents: ${response.size}")
+            println("First incident (if any): ${response.firstOrNull()}")
+            
+            return response
+        } catch (e: Exception) {
+            println("Error in getNearbyIncidents: ${e.javaClass.simpleName} - ${e.message}")
+            throw e
+        }
     }
 }

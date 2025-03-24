@@ -6,12 +6,12 @@ data class Incident(
     val type: String,
     val title: String,
     val description: String,
-    val latitude: String,  // Matches the API response type
-    val longitude: String, // Matches the API response type
+    val latitude: String,
+    val longitude: String,
     val severity: String,
     val status: String,
     val image_url: String?,
     val created_at: String,
     val updated_at: String,
-    val distance: Int
+    val distance: Double  // Changed from Int to Double to match API response
 )

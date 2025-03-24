@@ -19,6 +19,6 @@ interface IncidentApi {
         @Header("Authorization") token: String,
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,
-        @Query("radius") radius: Int = 5
+        @Query("radius") radius: Int = 500
     ): List<Incident>
 }
