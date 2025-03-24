@@ -20,42 +20,54 @@ class AuthViewModel @Inject constructor(
 
     fun onEvent(event: AuthEvent) {
         when (event) {
-            is AuthEvent.Register -> {
-                register(event.username, event.email, event.password)
-            }
-            is AuthEvent.Login -> {
-                login(event.email, event.password)
-            }
-        }
-    }
-
-    private fun register(username: String, email: String, password: String) {
-        viewModelScope.launch {
-            state = state.copy(isLoading = true)
-            val result = repository.register(User(username, email, password))
-            state = state.copy(
-                isLoading = false,
-                isAuthenticated = result.isSuccess,
-                error = result.exceptionOrNull()?.message
-            )
+            is AuthEvent.Register -> register(event.username, event.email, event.password)
+            is AuthEvent.Login -> login(event.email, event.password)
         }
     }
 
     private fun login(email: String, password: String) {
         viewModelScope.launch {
             state = state.copy(isLoading = true)
-            val result = repository.login(email, password)
-            state = state.copy(
-                isLoading = false,
-                isAuthenticated = result.isSuccess,
-                error = result.exceptionOrNull()?.message
-            )
+            try {
+                val response = repository.login(email, password)
+                // Save token after successful login
+                repository.saveToken(response.token)
+                state = state.copy(isAuthenticated = true, isLoading = false)
+            } catch (e: Exception) {
+                println("Login error: ${e.message}")
+                state = state.copy(error = e.message ?: "Error desconocido", isLoading = false)
+            }
+        }
+    }
+
+    fun register(name: String, email: String, password: String) {
+        viewModelScope.launch {
+            state = state.copy(isLoading = true)
+            try {
+                val user = User(
+                    username = name,
+                    email = email,
+                    password = password
+                )
+                val result = repository.register(user)
+                result.fold(
+                    onSuccess = { 
+                        state = state.copy(isSuccess = true, isLoading = false)
+                    },
+                    onFailure = { exception ->
+                        state = state.copy(error = exception.message ?: "Error desconocido", isLoading = false)
+                    }
+                )
+            } catch (e: Exception) {
+                state = state.copy(error = e.message ?: "Error desconocido", isLoading = false)
+            }
         }
     }
 }
 
 data class AuthState(
     val isLoading: Boolean = false,
+    val isSuccess: Boolean = false,
     val isAuthenticated: Boolean = false,
     val error: String? = null
 )

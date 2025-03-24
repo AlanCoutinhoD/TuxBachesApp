@@ -1,9 +1,10 @@
 package com.example.tuxbaches.data.model
 
 data class User(
-    val username: String = "",
-    val email: String = "",
-    val password: String = ""
+    val id: Int = 0,
+    val username: String,
+    val email: String,
+    val password: String
 )
 
 data class LoginRequest(
@@ -12,5 +13,7 @@ data class LoginRequest(
 )
 
 data class AuthResponse(
-    val token: String
+    val message: String,
+    val token: String,
+    val userId: Int
 )

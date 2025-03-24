@@ -8,8 +8,9 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.tuxbaches.data.api.AuthApi
 import com.example.tuxbaches.data.model.User
-import com.example.tuxbaches.data.model.LoginRequest
 import com.example.tuxbaches.data.model.AuthResponse
+import com.example.tuxbaches.data.model.LoginRequest
+import com.example.tuxbaches.util.PreferencesKeys
 
 @Singleton
 class AuthRepository @Inject constructor(
@@ -26,19 +27,14 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    suspend fun login(email: String, password: String): Result<AuthResponse> {
-        return try {
-            val response = api.login(LoginRequest(email, password))
-            saveToken(response.token)
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+    suspend fun login(email: String, password: String): AuthResponse {
+        val loginRequest = LoginRequest(email = email, password = password)
+        return api.login(loginRequest)
     }
 
-    private suspend fun saveToken(token: String) {
+    suspend fun saveToken(token: String) {
         dataStore.edit { preferences ->
-            preferences[stringPreferencesKey("auth_token")] = token
+            preferences[PreferencesKeys.TOKEN] = token
         }
     }
 }
