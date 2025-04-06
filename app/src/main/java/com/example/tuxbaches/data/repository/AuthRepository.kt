@@ -1,16 +1,16 @@
 package com.example.tuxbaches.data.repository
 
-import javax.inject.Inject
-import javax.inject.Singleton
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.example.tuxbaches.data.api.AuthApi
-import com.example.tuxbaches.data.model.User
 import com.example.tuxbaches.data.model.AuthResponse
 import com.example.tuxbaches.data.model.LoginRequest
+import com.example.tuxbaches.data.model.User
 import com.example.tuxbaches.util.PreferencesKeys
+import javax.inject.Inject
+import javax.inject.Singleton
 
 @Singleton
 class AuthRepository @Inject constructor(
