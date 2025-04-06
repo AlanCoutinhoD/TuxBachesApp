@@ -3,6 +3,7 @@ package com.example.tuxbaches.ui.screens
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -27,11 +28,14 @@ import com.example.tuxbaches.R
 // Add these imports at the top
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.tuxbaches.ui.viewmodel.HomeViewModel
+import com.example.tuxbaches.ui.viewmodel.IncidentViewModel
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
+    incidentViewModel: IncidentViewModel = hiltViewModel(),
     onNavigateToAddIncident: () -> Unit
 ) {
     val context = LocalContext.current
@@ -64,6 +68,9 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
+        // Change to use title instead of hardcoded message
+        incidentViewModel.voiceAlertManager.speakIncidentAlert(0, "Bienvenido a TuxBaches")
+        
         when {
             ContextCompat.checkSelfPermission(
                 context,
@@ -177,6 +184,27 @@ fun HomeScreen(
                 onDispose {
                     mapView.onPause()
                     mapView.onDetach()
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(incidents) {
+        currentLocation?.let { location ->
+            val androidLocation = Location("").apply {
+                latitude = location.latitude
+                longitude = location.longitude
+            }
+            delay(500)
+            // Verificar incidentes cercanos y usar el título
+            incidents.forEach { incident ->
+                val incidentLocation = Location("").apply {
+                    latitude = incident.latitude.toDoubleOrNull() ?: 0.0
+                    longitude = incident.longitude.toDoubleOrNull() ?: 0.0
+                }
+                val distance = androidLocation.distanceTo(incidentLocation).toInt()
+                if (distance < 100) { // 100 metros de radio
+                    incidentViewModel.voiceAlertManager.speakIncidentAlert(distance, incident.title)
                 }
             }
         }

@@ -1,5 +1,6 @@
 package com.example.tuxbaches.ui.viewmodel
 
+import android.location.Location
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,13 +15,15 @@ import com.example.tuxbaches.util.PreferencesKeys
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
+import com.example.tuxbaches.utils.VoiceAlertManager
 import javax.inject.Inject
 
 @HiltViewModel
 class IncidentViewModel @Inject constructor(
     private val repository: IncidentRepository,
     private val incidentApi: IncidentApi,
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    val voiceAlertManager: VoiceAlertManager
 ) : ViewModel() {
     var state by mutableStateOf(IncidentState())
         private set
@@ -55,6 +58,27 @@ class IncidentViewModel @Inject constructor(
             } catch (e: Exception) {
                 println("Error creating incident: ${e.message}")
                 state = state.copy(error = e.message ?: "Error desconocido", isLoading = false)
+            }
+        }
+    }
+
+    fun checkNearbyIncidents(currentLocation: Location) {
+        viewModelScope.launch {
+            try {
+                val incidents = repository.getNearbyIncidents(currentLocation.latitude, currentLocation.longitude)
+                incidents.forEach { incident ->
+                    val incidentLocation = Location("incident").apply {
+                        latitude = incident.latitude.toDoubleOrNull() ?: 0.0
+                        longitude = incident.longitude.toDoubleOrNull() ?: 0.0
+                    }
+                    val distance = currentLocation.distanceTo(incidentLocation).toInt()
+                    
+                    if (distance < 200) {
+                        voiceAlertManager.speakIncidentAlert(distance, incident.type)
+                    }
+                }
+            } catch (e: Exception) {
+                println("Error checking nearby incidents: ${e.message}")
             }
         }
     }
