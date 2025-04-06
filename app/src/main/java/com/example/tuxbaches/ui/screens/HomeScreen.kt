@@ -24,12 +24,24 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 
 import com.example.tuxbaches.R
+// Change this import
+import com.example.tuxbaches.data.model.Incident
 
-// Add these imports at the top
+// To either:
+// Remove duplicate imports and keep only:
+// OR move your Incident.kt file to match the expected package
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.tuxbaches.ui.viewmodel.HomeViewModel
 import com.example.tuxbaches.ui.viewmodel.IncidentViewModel
 import kotlinx.coroutines.delay
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +53,8 @@ fun HomeScreen(
     val context = LocalContext.current
     var currentLocation by remember { mutableStateOf<GeoPoint?>(null) }
     val incidents = viewModel.incidents.collectAsState().value
-    
+    var nearestIncident by remember { mutableStateOf<Pair<Incident, Double>?>(null) }
+
     // Configurar OSMdroid
     Configuration.getInstance().load(context, context.getSharedPreferences("osm_prefs", Context.MODE_PRIVATE))
 
@@ -186,25 +199,61 @@ fun HomeScreen(
                     mapView.onDetach()
                 }
             }
-        }
-    }
 
-    LaunchedEffect(incidents) {
-        currentLocation?.let { location ->
-            val androidLocation = Location("").apply {
-                latitude = location.latitude
-                longitude = location.longitude
-            }
-            delay(500)
-            // Verificar incidentes cercanos y usar el título
-            incidents.forEach { incident ->
-                val incidentLocation = Location("").apply {
-                    latitude = incident.latitude.toDoubleOrNull() ?: 0.0
-                    longitude = incident.longitude.toDoubleOrNull() ?: 0.0
+            // Nearest incident alert
+            LaunchedEffect(incidents) {
+                currentLocation?.let { location ->
+                    val androidLocation = Location("").apply {
+                        latitude = location.latitude
+                        longitude = location.longitude
+                    }
+                    delay(500)
+                    
+                    val nearest = incidents.minByOrNull { it.distance }
+                    
+                    nearest?.let { incident ->
+                        if (incident.distance < 500) {
+                            nearestIncident = incident to incident.distance
+                            incidentViewModel.voiceAlertManager.speakIncidentAlert(
+                                incident.distance.toInt(), 
+                                incident.title
+                            )
+                        } else {
+                            nearestIncident = null
+                        }
+                    } ?: run {
+                        nearestIncident = null
+                    }
                 }
-                val distance = androidLocation.distanceTo(incidentLocation).toInt()
-                if (distance < 100) { // 100 metros de radio
-                    incidentViewModel.voiceAlertManager.speakIncidentAlert(distance, incident.title)
+            }
+
+            nearestIncident?.let { (incident, distance) ->
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(16.dp)
+                        .background(
+                            color = Color.White,
+                            shape = RoundedCornerShape(8.dp)
+                        )
+                        .padding(16.dp)
+                ) {
+                    Column {
+                        Text(
+                            text = "Incidente cercano",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = incident.title,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = "Aproximadamente a ${distance.toInt()} metros",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
                 }
             }
         }

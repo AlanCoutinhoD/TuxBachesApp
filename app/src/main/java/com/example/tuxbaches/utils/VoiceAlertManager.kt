@@ -77,13 +77,9 @@ class VoiceAlertManager @Inject constructor(
         if (isReady) listener() else readyListeners.add(listener)
     }
 
-    fun speakIncidentAlert(distance: Int, title: String) {  // Cambiado de 'type' a 'title'
-        if (!isReady) {
-            pendingMessages.add(distance to title)  // Cambiado de 'type' a 'title'
-            println("Queuing message - TTS not ready yet")
-            return
-        }
-        speakNow(distance, title)  // Cambiado de 'type' a 'title'
+    fun speakIncidentAlert(distance: Int, title: String) {
+        val message = "Atención: A $distance metros hay $title. Tome precauciones."
+        tts.speak(message, TextToSpeech.QUEUE_FLUSH, null, null)
     }
 
     private fun speakNow(distance: Int, title: String) {  // Cambiado de 'type' a 'title'
