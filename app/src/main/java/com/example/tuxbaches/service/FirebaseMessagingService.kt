@@ -7,27 +7,29 @@ import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.tuxbaches.MainActivity
 import com.example.tuxbaches.R
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import timber.log.Timber
 
 class TuxBachesFirebaseMessagingService : FirebaseMessagingService() {
+    
+    private val TAG = "FCMService"
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
         
         // Check if message contains a notification payload
         remoteMessage.notification?.let {
-            Timber.d("Message Notification Body: ${it.body}")
+            Log.d(TAG, "Message Notification Body: ${it.body}")
             sendNotification(it.title ?: "TuxBaches", it.body ?: "Nueva notificación")
         }
         
         // Check if message contains data payload
         if (remoteMessage.data.isNotEmpty()) {
-            Timber.d("Message data payload: ${remoteMessage.data}")
+            Log.d(TAG, "Message data payload: ${remoteMessage.data}")
             val title = remoteMessage.data["title"] ?: "TuxBaches"
             val message = remoteMessage.data["message"] ?: "Nueva notificación"
             sendNotification(title, message)
@@ -35,7 +37,7 @@ class TuxBachesFirebaseMessagingService : FirebaseMessagingService() {
     }
 
     override fun onNewToken(token: String) {
-        Timber.d("Refreshed token: $token")
+        Log.d(TAG, "Refreshed token: $token")
         
         // If you want to send messages to this application instance or
         // manage this app's subscriptions on the server side, send the

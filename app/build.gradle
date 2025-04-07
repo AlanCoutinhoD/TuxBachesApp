@@ -52,6 +52,7 @@ dependencies {
     
     // Hilt
     implementation 'com.google.dagger:hilt-android:2.44'
+    implementation libs.firebase.messaging.ktx
     kapt "com.google.dagger:hilt-android-compiler:2.44"
     
     // For @ApplicationContext
@@ -73,4 +74,7 @@ dependencies {
     
     // DataStore
     implementation 'androidx.datastore:datastore-preferences:1.0.0'
+    
+    // Add Timber for logging
+    implementation 'com.jakewharton.timber:timber:5.0.1'
 }
