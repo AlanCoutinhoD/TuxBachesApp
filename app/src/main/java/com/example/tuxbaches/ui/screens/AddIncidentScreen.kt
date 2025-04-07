@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
@@ -17,12 +18,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.tuxbaches.R
 import com.example.tuxbaches.ui.viewmodel.IncidentViewModel
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import coil.compose.rememberAsyncImagePainter
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +48,44 @@ fun AddIncidentScreen(
 
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
+    }
+
+    fun createImageFile(): File {
+        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile(
+            "JPEG_${timeStamp}_",
+            ".jpg",
+            storageDir
+        )
+        // Remove the createNewFile() call as createTempFile already creates the file
+    }
+
+    val takePictureLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (!success) {
+            imageUri = null
+        }
+    }
+
+    val cameraPermissions = arrayOf(
+        Manifest.permission.CAMERA
+        // Remove WRITE_EXTERNAL_STORAGE as it's not needed for API 29+ and causes issues
+    )
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        if (permissions.all { it.value }) {
+            val file = createImageFile()
+            imageUri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.provider",
+                file
+            )
+            takePictureLauncher.launch(imageUri)
+        }
     }
 
     val pickMedia = rememberLauncherForActivityResult(
@@ -173,13 +217,44 @@ fun AddIncidentScreen(
                 }
             }
 
-            Button(
-                onClick = {
-                    pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                },
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Seleccionar Imagen")
+                Button(
+                    onClick = {
+                        try {
+                            if (cameraPermissions.all {
+                                ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+                            }) {
+                                val file = createImageFile()
+                                imageUri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.provider",
+                                    file
+                                )
+                                takePictureLauncher.launch(imageUri)
+                            } else {
+                                cameraPermissionLauncher.launch(cameraPermissions)
+                            }
+                        } catch (e: Exception) {
+                            // Log or handle the exception
+                            println("Camera error: ${e.message}")
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Tomar Foto")
+                }
+
+                Button(
+                    onClick = {
+                        pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Galería")
+                }
             }
 
             imageUri?.let { uri ->
@@ -200,19 +275,19 @@ fun AddIncidentScreen(
                 onClick = {
                     location?.let { (latitude, longitude) ->
                         viewModel.createIncident(
-                            "pothole", // or get this from UI input
-                            title, 
-                            latitude, // Double
-                            longitude, // Double
-                            severity, // String
+                            "pothole",
+                            title,
+                            latitude,
+                            longitude,
+                            severity,
                             imageUri
                         )
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = location != null && 
-                             title.isNotBlank() && 
-                             severity.isNotBlank()
+                         title.isNotBlank() && 
+                         severity.isNotBlank()
             ) {
                 Text("Guardar Incidente")
             }
