@@ -3,9 +3,11 @@ package com.example.tuxbaches.ui.screens
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.LocationManager
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,10 +20,9 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.tuxbaches.R
 import com.example.tuxbaches.ui.viewmodel.IncidentViewModel
-
-// Add these imports at the top
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import coil.compose.rememberAsyncImagePainter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,9 +38,16 @@ fun AddIncidentScreen(
     var severity by remember { mutableStateOf("high") }
     var location by remember { mutableStateOf<Pair<Double, Double>?>(null) }
     var expanded by remember { mutableStateOf(false) }
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
 
     val fusedLocationClient = remember {
         LocationServices.getFusedLocationProviderClient(context)
+    }
+
+    val pickMedia = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        imageUri = uri
     }
 
     LaunchedEffect(state.isSuccess) {
@@ -47,6 +55,7 @@ fun AddIncidentScreen(
             onNavigateToHome()
         }
     }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
@@ -142,26 +151,43 @@ fun AddIncidentScreen(
                 ) {
                     DropdownMenuItem(
                         text = { Text("Alta") },
-                        onClick = { 
+                        onClick = {
                             severity = "high"
                             expanded = false
                         }
                     )
                     DropdownMenuItem(
                         text = { Text("Media") },
-                        onClick = { 
+                        onClick = {
                             severity = "medium"
                             expanded = false
                         }
                     )
                     DropdownMenuItem(
                         text = { Text("Baja") },
-                        onClick = { 
+                        onClick = {
                             severity = "low"
                             expanded = false
                         }
                     )
                 }
+            }
+
+            Button(
+                onClick = {
+                    pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Seleccionar Imagen")
+            }
+
+            imageUri?.let { uri ->
+                Image(
+                    painter = rememberAsyncImagePainter(uri),
+                    contentDescription = "Imagen seleccionada",
+                    modifier = Modifier.size(100.dp)
+                )
             }
 
             if (location != null) {
@@ -173,14 +199,20 @@ fun AddIncidentScreen(
             Button(
                 onClick = {
                     location?.let { (latitude, longitude) ->
-                        viewModel.createIncident(title, description, severity, latitude, longitude)
+                        viewModel.createIncident(
+                            "pothole", // or get this from UI input
+                            title, 
+                            latitude, // Double
+                            longitude, // Double
+                            severity, // String
+                            imageUri
+                        )
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = location != null && 
-                         title.isNotBlank() && 
-                         description.isNotBlank() && 
-                         severity.isNotBlank()
+                             title.isNotBlank() && 
+                             severity.isNotBlank()
             ) {
                 Text("Guardar Incidente")
             }

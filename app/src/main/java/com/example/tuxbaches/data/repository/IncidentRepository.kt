@@ -1,5 +1,7 @@
 package com.example.tuxbaches.data.repository
 
+import android.app.Application
+import android.net.Uri
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -7,43 +9,62 @@ import com.example.tuxbaches.data.api.IncidentApi
 import com.example.tuxbaches.data.model.Incident
 import com.example.tuxbaches.util.PreferencesKeys
 import kotlinx.coroutines.flow.first
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class IncidentRepository @Inject constructor(
     private val api: IncidentApi,
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val application: Application
 ) {
-    suspend fun createIncident(incident: Incident): Incident {
+    suspend fun createIncident(
+        type: String,
+        title: String,
+        latitude: Double,
+        longitude: Double,
+        severity: String,
+        imageUri: Uri?
+    ): Incident {
         val token = dataStore.data.first()[PreferencesKeys.TOKEN] ?: throw Exception("No token found")
-        println("Creating incident with token: $token")
-        val response = api.createIncident("Bearer $token", incident)
-        println("API Response for create incident: $response")
-        return response
+        
+        val typeBody = type.toRequestBody("text/plain".toMediaTypeOrNull())
+        val titleBody = title.toRequestBody("text/plain".toMediaTypeOrNull())
+        val latBody = latitude.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        val lonBody = longitude.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+        val severityBody = severity.toRequestBody("text/plain".toMediaTypeOrNull())
+        
+        val imagePart = imageUri?.let { uri ->
+            val inputStream = application.contentResolver.openInputStream(uri)
+            val file = File.createTempFile("image", ".jpg").apply {
+                inputStream?.use { it.copyTo(outputStream()) }
+            }
+            
+            MultipartBody.Part.createFormData(
+                "image",
+                file.name,
+                file.asRequestBody("image/*".toMediaTypeOrNull())
+            )
+        }
+
+        return api.createIncident(
+            "Bearer $token",
+            typeBody,
+            titleBody,
+            latBody,
+            lonBody,
+            severityBody,
+            imagePart
+        )
     }
 
     suspend fun getNearbyIncidents(latitude: Double, longitude: Double): List<Incident> {
-        try {
-            println("Starting getNearbyIncidents - Lat: $latitude, Lon: $longitude")
-            
-            val token = dataStore.data.first()[PreferencesKeys.TOKEN]
-            println("Token retrieved: ${token != null}")
-            
-            if (token == null) {
-                println("Token is null - Authentication issue")
-                throw Exception("No token found")
-            }
-            
-            println("Making API call with token: ${token.take(10)}...")
-            val response = api.getNearbyIncidents("Bearer $token", latitude, longitude)
-            println("API Response received - Number of incidents: ${response.size}")
-            println("First incident (if any): ${response.firstOrNull()}")
-            
-            return response
-        } catch (e: Exception) {
-            println("Error in getNearbyIncidents: ${e.javaClass.simpleName} - ${e.message}")
-            throw e
-        }
+        val token = dataStore.data.first()[PreferencesKeys.TOKEN] ?: throw Exception("No token found")
+        return api.getNearbyIncidents("Bearer $token", latitude, longitude)
     }
 }

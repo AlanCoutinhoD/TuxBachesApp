@@ -42,7 +42,7 @@ dependencies {
     implementation 'androidx.compose.ui:ui'
     implementation 'androidx.compose.material3:material3:1.1.2' // or latest version
     implementation 'androidx.compose.ui:ui-tooling-preview'
-    
+    implementation "io.coil-kt:coil-compose:2.4.0"
     // Lifecycle
     implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1'
     implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.6.1'
@@ -60,9 +60,13 @@ dependencies {
     
     // Retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation 'com.squareup.retrofit2:converter-scalars:2.9.0'
+    // Add this line for multipart support
+    implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:4.10.0'
+    implementation "com.github.bumptech.glide:compose:1.0.0-alpha.1" // For image loading
     
     // Location Services
     implementation 'com.google.android.gms:play-services-location:21.0.1'

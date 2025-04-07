@@ -1,17 +1,21 @@
 package com.example.tuxbaches.data.api
 
 import com.example.tuxbaches.data.model.Incident
-import retrofit2.http.Body
-import retrofit2.http.Header
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Query
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import retrofit2.http.*
 
 interface IncidentApi {
+    @Multipart
     @POST("api/incidents")
     suspend fun createIncident(
         @Header("Authorization") token: String,
-        @Body incident: Incident
+        @Part("type") type: RequestBody,
+        @Part("title") title: RequestBody,
+        @Part("latitude") latitude: RequestBody,
+        @Part("longitude") longitude: RequestBody,
+        @Part("severity") severity: RequestBody,
+        @Part image: MultipartBody.Part?
     ): Incident
 
     @GET("api/incidents/nearby")
