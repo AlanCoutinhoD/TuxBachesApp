@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "120716331123",
+    "project_id": "tuxbaches",
+    "storage_bucket": "tuxbaches.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:120716331123:android:84f82eb37cb28e83564206",
+        "android_client_info": {
+          "package_name": "com.example.tuxbaches"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDa7C-6ej5yRJJQFjZsmZ36ldD7g2Gn4ao"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
